@@ -1,0 +1,124 @@
+site_name: llama-cmpv
+site_description: NVIDIA CMP 100-210 llama.cpp research, patch evidence, and volatile runtime unlock status.
+site_author: Joseph Stackhouse and Brazzo978 contributors
+site_url: https://brazzo978.github.io/llama.cmp-v/
+
+repo_url: https://github.com/Brazzo978/llama.cmp-v
+repo_name: Brazzo978/llama.cmp-v
+edit_uri: edit/main/
+
+copyright: >-
+  Original llama-cmpv documentation and research attribution: Joseph Stackhouse,
+  Stack-Tech. This public fork preserves upstream MIT licensing and links the
+  separately GPL-2.0 CMP100 runtime implementation without incorporating it.
+
+docs_dir: docs
+site_dir: site
+
+nav:
+  - Home: index.md
+  - The hardware: hardware.md
+  - Unlock status: unlock.md
+  - The patches:
+      - Overview: patches/index.md
+      - Research selector registry: patches/research-selectors.md
+      - DP4A MMQ routing: patches/mmq-dp4a-routing.md
+      - Q4_K / Q5_K coverage: patches/mmq-dp4a-q4k-q5k.md
+      - Parallel model load: patches/parallel-model-load.md
+      - Mapped host bridge: patches/mapped-host-bridge.md
+      - Prompt graph capture seed: patches/prompt-graph-capture-seed.md
+      - Device-side mask expansion: patches/device-side-mask-expansion.md
+  - Results:
+      - Promoted patches: results/index.md
+      - Benchmarks: results/benchmarks.md
+      - SM70 D256 shared Q: results/2026-09-07-sm70-d256-shared-q.md
+  - Method: method.md
+  - About: about.md
+
+theme:
+  name: material
+  language: en
+  icon:
+    logo: material/expansion-card-variant
+    repo: fontawesome/brands/github
+  favicon: assets/favicon.svg
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Follow the system theme
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - content.tooltips
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  generator: false
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      permalink_title: Link to this section
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

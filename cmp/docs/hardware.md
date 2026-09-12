@@ -7,6 +7,8 @@ description: NVIDIA CMP 100-210 / CMP 100HX-210 compute units, tensor and FP64 t
 
 The **NVIDIA CMP 100-210**, also known as **CMP 100HX-210**, uses GV100 silicon and reports CUDA compute capability **7.0 (SM70)**. Its HBM2 capacity and bandwidth make it useful for inference, but the GV100 name does not imply V100-level compute throughput or connectivity.
 
+The separate [unlock status](unlock.md) records the narrowly tested, volatile runtime recovery path for this device. It is not folded into the comparison below: those measurements retain their original configurations and controls.
+
 ## What was taken away
 
 The following resource and performance differences were observed in a September 7, 2026 hardware comparison. They describe tested configurations; they do not identify the hardware or firmware mechanism responsible for each restriction.
