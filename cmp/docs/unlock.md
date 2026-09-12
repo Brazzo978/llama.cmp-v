@@ -5,7 +5,7 @@ description: Evidence and limits for the public CMP100-210 runtime Tensor and PC
 
 # Volatile unlock status
 
-This page records a deliberately narrow recovery path for **NVIDIA CMP100-210 (`10de:1d84`, GV100)**. The maintained implementation is the public [CmpUnlocker-100-210](https://github.com/Brazzo978/CmpUnlocker-100-210/tree/1664127f4a0222206fd7211c964b8dbed55b81eb) project, licensed separately under GPL-2.0. This documentation links to it; it does not copy its code, firmware inputs, private laboratory material, or privileged payloads.
+This page records a tested recovery path for **NVIDIA CMP100-210 (`10de:1d84`, GV100)**. The maintained implementation is the public [CmpUnlocker-100-210](https://github.com/Brazzo978/CmpUnlocker-100-210/tree/1664127f4a0222206fd7211c964b8dbed55b81eb) project, licensed separately under GPL-2.0. This documentation links to it; it does not copy its code, firmware inputs, private laboratory material, or privileged payloads.
 
 The intervention is runtime-only. It does not flash a VBIOS or program eFuses, and a reset or power cycle returns the tested boards to their stock state. Use the public project's exact hardware, firmware, driver, ownership, and recovery-console checks before considering its one-shot procedures.
 
@@ -30,7 +30,7 @@ This is a separate, dated after-unlock run on two 68-SM `sm_70` cards: PyTorch `
 
 | Measurement | GPU 0 | GPU 1 | Validation and limit |
 | --- | ---: | ---: | --- |
-| FP16 GEMM, `N=8192`, 8 warmups, 15 repeats | 73.8018 TFLOPS median | 75.6263 TFLOPS median | Finite-result check passed. |
+| FP16 GEMM, `N=8192`, 8 warmups, 15 repeats | 73.8018 TFLOPS median | 75.6263 TFLOPS median | Finite-result check and a CPU double-precision full-K reference on an `8 x 8` output block passed. |
 | FP64 GEMM, `N=4096`, 8 warmups, 15 repeats | 5.61980 TFLOPS median | 5.61886 TFLOPS median | Finite-result check and a CPU double-precision full-K reference on an `8 x 8` output block passed. This is **after-only** evidence; no new local controlled FP64 before/after claim is made. |
 | Pinned 32 MiB host to device | 416.45 MB/s | 416.98 MB/s | Consistent with the independently checked Gen2 x1 link. |
 | Pinned 32 MiB device to host | 418.68 MB/s | 418.86 MB/s | Consistent with the independently checked Gen2 x1 link. |
@@ -49,17 +49,17 @@ No instruction here suggests a speculative zero write or a write intended to exp
 
 ## Integration findings
 
-Three field failures produced concrete guardrails for the public runtime path:
+Three reported defects produced local fixes validated during the 2026-09-12 run. They are recorded here as test findings; they do not assert that every public revision of the linked runtime already contains each fix.
 
-- The base `nvidia` module must remain loaded. The maintained script removes only the dependent NVIDIA modules it needs to detach and removes its dedicated hook with `rmmod`; a recursive unload of `nvidia` itself breaks recovery.
-- Some distributions block Nouveau through an alias policy. Direct per-device driver binding is the normal path; if that policy prevents Nouveau from loading, the test environment needs a configuration-free fallback that does not alter the host's persistent module policy. This is a compatibility condition to diagnose from logs, not evidence that every distribution is supported.
-- After an unbind, PCI configuration reads can return `FFFFFFFF` until memory decoding is restored. The observed recovery was `setpci ... COMMAND=0002:0002`, which enables the memory-decode bit before the readback. This is a recovery observation for the affected test state, not a general configuration recipe.
+- The base `nvidia` module must remain loaded. A recursive `modprobe -r` against that base driver breaks recovery; the local correction removes the dedicated hook with `rmmod` while leaving `nvidia` intact.
+- Some distributions block Nouveau through an alias policy. In the affected local test, `modprobe -C /dev/null nouveau` supplied a configuration-free fallback before direct per-device binding. It changes no persistent module policy and is not evidence that every distribution is supported.
+- After an unbind, BAR0/MMIO reads can return `FFFFFFFF` until PCI memory decoding is restored. The observed recovery was `setpci ... COMMAND=0002:0002`, which enables the memory-decode bit before the BAR0 readback. This is a recovery observation for the affected test state, not a general configuration recipe.
 
 ## Reports kept outside the controlled table
 
 An independent Ubuntu tester reported nine stock `1d84` cards plus one hardware-modified card under driver `575.57.08` and kernel `6.8.0-139`. The tester said the public runtime mechanism worked without modification; reported FP64 throughput was **4.43 TFLOPS per card** (about 40 TFLOPS across nine cards) versus a **0.443 TFLOPS** reference that was not a controlled same-card baseline. FP32 was reported unchanged. These results are useful leads, not a replacement for an A/B capture on the same board.
 
-The same tester reported a single-card llama.cpp prefill change of **358 to 2,109 tok/s** (5.89x). In a distinct tuned six-GPU Gen2 setup, the reported changes were **+32.5%** for the tuned fork and **+4.9%** for the compute unlock. Model, binary, prompt, device split, and measurement controls differ from this site's accepted benchmarks, so none of these figures are generalized here. A separate `0.443 -> 6.876` FP64 figure attributed to [duggasco](https://github.com/duggasco) has not been independently reproduced by this project.
+The same tester reported a single-card llama.cpp prefill change of **358 to 2,109 tok/s** (5.89x). In a distinct tuned six-GPU workload, the reported Gen2 gain was **+32.5%**; adding the compute unlock to that same workload was reported as **+4.9%**. Model, binary, prompt, device split, and measurement controls differ from this site's accepted benchmarks, so none of these figures are generalized here. A separate `0.443 -> 6.876` FP64 figure attributed to [duggasco](https://github.com/duggasco) has not been independently reproduced by this project.
 
 ## Rejected strap and VBIOS inference
 
