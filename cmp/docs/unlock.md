@@ -35,6 +35,19 @@ This is a separate, dated after-unlock run on two 68-SM `sm_70` cards: PyTorch `
 | Pinned 32 MiB host to device | 416.45 MB/s | 416.98 MB/s | Consistent with the independently checked Gen2 x1 link. |
 | Pinned 32 MiB device to host | 418.68 MB/s | 418.86 MB/s | Consistent with the independently checked Gen2 x1 link. |
 
+## HBM clock control through NVML: 2026-09-12
+
+A local Rust/NVML controller was verified on both `10de:1d84` cards with NVIDIA driver `550.163.01`, without Xorg. Stopping the earlier service returned the raw control to `0` and the observed HBM clock to 810 MHz; `nvmlDeviceSetMemClkVfOffset(138)` then read back exactly `138` and restored 877 MHz on both cards. The legacy NVML documentation does not specify the unit of this raw integer, so 877 MHz is not described here as an "offset" or as a fixed conversion ratio.
+
+On these cards, `nvmlDeviceGetMemClkMinMaxVfOffset` reported `0..0` even though the exact readback above accepted `138`. The controller therefore rejects values outside the reported range by default and requires an explicitly logged `--allow-out-of-range` override for this tested case. Service start and restart were observed to reset to `0` and reapply `138`; both links remained Gen2 x1, Xorg was absent, and no NVIDIA Xid was observed. This does not establish persistence through a further reboot.
+
+| 256 MiB device-to-device copy, read plus write | GPU 0 | GPU 1 | Validation and limit |
+| --- | ---: | ---: | --- |
+| Raw NVML control `0` | 711.381 GB/s | 711.381 GB/s | 10 warmups and 20 timed samples; full `torch.equal` check passed. |
+| Raw NVML control `138` | 766.503 GB/s (**+7.7%**) | 764.268 GB/s (**+7.4%**) | Same copy method and correctness check. |
+
+A separate earlier Xorg run at raw control `138` measured 771.580 and 769.880 GB/s. It was neither interleaved with this NVML run nor fixed to the same core clock, so it supports no NVML-versus-Xorg superiority claim. These are memory-copy measurements only; no LLM result follows from them.
+
 ## Controlled runtime results
 
 The public implementation uses a signed Nouveau ACR handoff and verifies a runtime transition at `0x409664` from the stock `0x999` value to `0x888` before returning the device to NVIDIA. The observed effect is restoration of the compute path. Calling that field a "compute-pipe unlock" is a useful working description, but its complete hardware semantics remain tentative.
