@@ -51,7 +51,7 @@ No instruction here suggests a speculative zero write or a write intended to exp
 
 Three reported defects produced local fixes validated during the 2026-09-12 run. They are recorded here as test findings; they do not assert that every public revision of the linked runtime already contains each fix.
 
-- The base `nvidia` module must remain loaded. A recursive `modprobe -r` against that base driver breaks recovery; the local correction removes the dedicated hook with `rmmod` while leaving `nvidia` intact.
+- The base `nvidia` module must remain loaded. `modprobe -r` on an unused child such as `nvidia_uvm`, `nvidia_drm`, or `nvidia_modeset` can recursively unload its parent `nvidia`; the local correction uses `rmmod` only on those explicitly named child modules. The dedicated hook was already removed separately with `rmmod`.
 - Some distributions block Nouveau through an alias policy. In the affected local test, `modprobe -C /dev/null nouveau` supplied a configuration-free fallback before direct per-device binding. It changes no persistent module policy and is not evidence that every distribution is supported.
 - After an unbind, BAR0/MMIO reads can return `FFFFFFFF` until PCI memory decoding is restored. The observed recovery was `setpci ... COMMAND=0002:0002`, which enables the memory-decode bit before the BAR0 readback. This is a recovery observation for the affected test state, not a general configuration recipe.
 
@@ -59,7 +59,7 @@ Three reported defects produced local fixes validated during the 2026-09-12 run.
 
 An independent Ubuntu tester reported nine stock `1d84` cards plus one hardware-modified card under driver `575.57.08` and kernel `6.8.0-139`. The tester said the public runtime mechanism worked without modification; reported FP64 throughput was **4.43 TFLOPS per card** (about 40 TFLOPS across nine cards) versus a **0.443 TFLOPS** reference that was not a controlled same-card baseline. FP32 was reported unchanged. These results are useful leads, not a replacement for an A/B capture on the same board.
 
-The same tester reported a single-card llama.cpp prefill change of **358 to 2,109 tok/s** (5.89x). In a distinct tuned six-GPU workload, the reported Gen2 gain was **+32.5%**; adding the compute unlock to that same workload was reported as **+4.9%**. Model, binary, prompt, device split, and measurement controls differ from this site's accepted benchmarks, so none of these figures are generalized here. A separate `0.443 -> 6.876` FP64 figure attributed to [duggasco](https://github.com/duggasco) has not been independently reproduced by this project.
+The same tester reported a single-card llama.cpp prefill change of **358 to 2,109 tok/s** (5.89x). In a distinct tuned six-GPU workload, the reported Gen2 gain was **+32.5%**; the compute unlock was reported as **+4.9%** on the same workload. Model, binary, prompt, device split, and measurement controls differ from this site's accepted benchmarks, so none of these figures are generalized here. A separate `0.443 -> 6.876` FP64 figure attributed to [duggasco](https://github.com/duggasco) has not been independently reproduced by this project.
 
 ## Rejected strap and VBIOS inference
 
